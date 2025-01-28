@@ -60,7 +60,7 @@ class SignUpController extends GetxController {
   }
 
   Future<void> registerUser() async {
-    final url = Uri.parse('http://vinlab-6678db1ce141/register');
+    final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/register');
 
     final Map<String, String> requestBody = {
       'firstName': firstNameController.text,

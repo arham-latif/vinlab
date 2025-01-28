@@ -33,7 +33,7 @@ class LoginController extends GetxController {
   }
 
   Future<void> login() async {
-    final url = Uri.parse('http://vinlab-6678db1ce141/login');
+    final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/login');
 
     final Map<String, String> requestBody = {
       'email': emailController.text,
@@ -56,13 +56,6 @@ class LoginController extends GetxController {
       var body = json.decode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (kDebugMode) {
-          print('Registration successful');
-        }
-        if (kDebugMode) {
-          print(responseData);
-        }
-
         final prefs = await SharedPreferences.getInstance();
         prefs.setString("password", passwordController.text);
         prefs.setString("user", jsonEncode(responseData["user"]));
@@ -74,7 +67,6 @@ class LoginController extends GetxController {
         isLoading.value = false;
       } else {
         if (kDebugMode) {
-          print('Failed to register. Status code: ${response.statusCode}');
           print(body["message"]);
         }
         Toaster.error("Error", body["message"]);
@@ -85,7 +77,7 @@ class LoginController extends GetxController {
       if (kDebugMode) {
         print('Error occurred: $error');
       }
-      Toaster.error("Error", "Failed to register user");
+      Toaster.error("Error", "Failed to fetch user details");
       isLoading.value = false;
     }
   }

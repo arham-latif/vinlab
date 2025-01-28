@@ -97,7 +97,7 @@ class _GroupScreenState extends State<GroupScreen> {
   // Initialize Socket.IO connection
   void _initializeSocket() {
     socket = IO.io(
-      'http://vinlab-6678db1ce141',
+      'http://vinlab-6678db1ce141.herokuapp.com',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -131,8 +131,8 @@ class _GroupScreenState extends State<GroupScreen> {
 
   // Fetch existing messages from the API
   Future<void> _fetchMessages() async {
-    final url =
-        Uri.parse('http://vinlab-6678db1ce141/messages/${widget.chatroomId}');
+    final url = Uri.parse(
+        'http://vinlab-6678db1ce141.herokuapp.com/messages/${widget.chatroomId}');
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');

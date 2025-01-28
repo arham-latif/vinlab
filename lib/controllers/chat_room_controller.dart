@@ -19,7 +19,8 @@ class ChatRoomController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
-      final url = Uri.parse('http://vinlab-6678db1ce141/chatrooms');
+      final url =
+          Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/chatrooms');
 
       final response = await http.get(
         url,
@@ -45,7 +46,7 @@ class ChatRoomController extends GetxController {
   }
 
   Future<void> createChatroom() async {
-    final url = Uri.parse('http://vinlab-6678db1ce141/chatroom');
+    final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/chatroom');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -93,7 +94,7 @@ class ChatRoomController extends GetxController {
       var user = jsonDecode(prefs.getString("user")!);
       print(user["email"]);
 
-      final url = Uri.parse('http://vinlab-6678db1ce141/users');
+      final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/users');
 
       final response = await http.get(
         url,
