@@ -17,8 +17,7 @@ class HomeController extends GetxController {
       double amount, String currency, String subscription) async {
     isLoading.value = true;
     try {
-      final url = Uri.parse(
-          'http://vinlab-6678db1ce141.herokuapp.com/create-payment-intent');
+      final url = Uri.parse('http://192.168.10.23:5000/create-payment-intent');
       final int amountInCents = (amount).round();
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -57,8 +56,8 @@ class HomeController extends GetxController {
 
       isLoading.value = false;
 
-      final updateUserUrl = Uri.parse(
-          'http://vinlab-6678db1ce141.herokuapp.com/transaction-success');
+      final updateUserUrl =
+          Uri.parse('http://192.168.10.23:5000/transaction-success');
       var user = jsonDecode(prefs.getString("user")!);
       print(user);
 

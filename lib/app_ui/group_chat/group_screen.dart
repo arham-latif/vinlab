@@ -8,11 +8,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vinlab_new/app_ui/group_chat/video_preview.dart';
+import 'package:vinlab_new/controllers/chat_room_controller.dart';
 
-import '../../utils/app_colors.dart';
 import 'about_group.dart';
 import 'admin_access_screen.dart';
-import 'leave_group_dialogue.dart';
 
 class GroupScreen extends StatefulWidget {
   final String chatroomId;
@@ -35,6 +34,12 @@ class _GroupScreenState extends State<GroupScreen> {
   List<Map<String, dynamic>> messages = [];
   bool isLoading = true;
   final ScrollController _scrollController = ScrollController();
+  static const Color primaryCarColor =
+      Color(0xFFD32F2F); // Example: Ferrari Red
+  static const Color secondaryCarColor =
+      Color(0xFF424242); // Example: Dark Grey
+  static const TextStyle messageTextStyle = TextStyle(fontFamily: 'RobotoMono');
+  final ChatRoomController _chatRoomController = Get.find();
 
   final ImagePicker _picker = ImagePicker();
   File? _image;
@@ -80,6 +85,7 @@ class _GroupScreenState extends State<GroupScreen> {
     super.initState();
     _fetchMessages();
     _initializeSocket();
+    _scrollToBottom();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
@@ -97,7 +103,7 @@ class _GroupScreenState extends State<GroupScreen> {
   // Initialize Socket.IO connection
   void _initializeSocket() {
     socket = IO.io(
-      'http://vinlab-6678db1ce141.herokuapp.com',
+      'http://192.168.10.23:5000',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -131,8 +137,8 @@ class _GroupScreenState extends State<GroupScreen> {
 
   // Fetch existing messages from the API
   Future<void> _fetchMessages() async {
-    final url = Uri.parse(
-        'http://vinlab-6678db1ce141.herokuapp.com/messages/${widget.chatroomId}');
+    final url =
+        Uri.parse('http://192.168.10.23:5000/messages/${widget.chatroomId}');
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -217,23 +223,21 @@ class _GroupScreenState extends State<GroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("chatroom:");
+    print(widget.chatroom);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.red,
-        centerTitle: true,
-        title: Text(widget.chatroom["name"]),
+        title: Text(widget.chatroom["name"]), // More specific title
+        backgroundColor: primaryCarColor, // Car-themed app bar
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings),
-            onSelected: (String result) {
+            onSelected: (String result) async {
               switch (result) {
                 case 'leave':
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return LeaveGroupDialog(
-                            groupName: widget.chatroom["name"]);
-                      });
+                  _chatRoomController.deleteChatroom(widget.chatroomId);
+                  Get.back();
+                  // _chatRoomController.fetchChatroomList();
                   break;
                 case 'about':
                   showDialog(
@@ -253,7 +257,9 @@ class _GroupScreenState extends State<GroupScreen> {
                     isScrollControlled: true,
                     builder: (BuildContext context) {
                       return AdminBottomSheet(
-                          members: widget.chatroom["users"]);
+                        members: widget.chatroom["users"],
+                        chatroomId: widget.chatroomId,
+                      );
                     },
                   );
                   break;
@@ -262,7 +268,7 @@ class _GroupScreenState extends State<GroupScreen> {
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               const PopupMenuItem<String>(
                 value: 'leave',
-                child: Text('Leave Group'),
+                child: Text('Delete Group'),
               ),
               const PopupMenuItem<String>(
                 value: 'about',
@@ -270,163 +276,206 @@ class _GroupScreenState extends State<GroupScreen> {
               ),
               const PopupMenuItem<String>(
                 value: 'admin',
-                child: Text('Admins Access'),
+                child: Text('Manage Members'),
               ),
             ],
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : messages.isNotEmpty
-                    ? ListView.builder(
-                        controller: _scrollController,
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          bool isMe = message['sender']['_id'].toString() ==
-                                  widget.userId.toString()
-                              ? true
-                              : false;
-                          print(message);
-
-                          return Align(
-                            alignment: isMe
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              margin: const EdgeInsets.symmetric(
-                                  vertical: 5, horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: isMe ? Colors.blue : Colors.grey[300],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      "${message["sender"]["firstName"]} ${message["sender"]["lastName"]}"),
-                                  message["messageType"] == "text"
-                                      ? Text(
-                                          message['content'],
-                                          style: TextStyle(
-                                              color: isMe
-                                                  ? Colors.white
-                                                  : Colors.black),
-                                        )
-                                      : message["messageType"] == "image"
-                                          ? SizedBox(
-                                              height: 250,
-                                              width: 190,
-                                              child: Image.memory(
-                                                base64Decode(
-                                                    message['content']),
-                                              ),
-                                            )
-                                          : message["messageType"] == "video"
-                                              ? SizedBox(
-                                                  height: 200,
-                                                  width: 250,
-                                                  child: VideoPreview(
-                                                    base64Video:
-                                                        message['content'],
-                                                  ),
-                                                )
-                                              : Container(
-                                                  color: Colors.red,
-                                                  width: 10,
-                                                  height: 10,
-                                                ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : const Center(child: Text("No messages")),
+      body: Container(
+        decoration: const BoxDecoration(
+          // Subtle car-related background (optional)
+          image: DecorationImage(
+            image: AssetImage(
+                "assets/icons/background-chat.png"), // Replace with your image
+            fit: BoxFit.cover,
+            // opacity: 0.2, // Adjust opacity as needed
           ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-            child: Row(
-              children: [
-                IconButton(
-                  icon:
-                      Icon(Icons.attachment, color: AppColors.appPrimaryRedCLr),
-                  // onPressed: _pickImage,
-                  onPressed: () {
-                    Get.bottomSheet(
-                      Container(
-                        height: 150,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(20)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Choose Media",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                // Image Picker Icon
-                                Column(
-                                  children: [
-                                    IconButton(
-                                      onPressed: _pickImage,
-                                      icon: const Icon(Icons.image,
-                                          size: 40, color: Colors.blue),
-                                    ),
-                                    const Text("Image"),
-                                  ],
-                                ),
-                                // Video Picker Icon
-                                Column(
-                                  children: [
-                                    IconButton(
-                                      onPressed: _pickVideo,
-                                      icon: const Icon(Icons.videocam,
-                                          size: 40, color: Colors.red),
-                                    ),
-                                    const Text("Video"),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Type your message...',
-                      border: OutlineInputBorder(),
-                    ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: _buildMessageList(),
+            ),
+            _buildInputArea(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageList() {
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : messages.isNotEmpty
+            ? ListView.builder(
+                controller: _scrollController,
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  final message = messages[index];
+                  bool isMe = message['sender']['_id'].toString() ==
+                      widget.userId.toString();
+                  return _buildMessageBubble(message, isMe);
+                },
+              )
+            : const Center(
+                child: Text(
+                  "No messages yet. Start chatting!",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
                   ),
                 ),
-                const SizedBox(width: 10),
-                IconButton(
-                    icon: const Icon(Icons.send),
-                    color: Colors.blue,
-                    onPressed: () {
-                      _sendMessage();
-                    }),
-              ],
+              );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> message, bool isMe) {
+    final backgroundColor = isMe ? primaryCarColor : secondaryCarColor;
+    final textColor =
+        isMe ? Colors.white : Colors.white; // Text color based on bubble
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.all(12), // Slightly larger padding
+        margin: const EdgeInsets.symmetric(
+            vertical: 8, horizontal: 16), // More margin
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(15), // More rounded corners
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "${message["sender"]["firstName"]} ${message["sender"]["lastName"]}",
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white), // White sender name
             ),
+            const SizedBox(height: 6), // Increased spacing
+            _buildMessageContent(message, textColor), // Pass text color
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageContent(Map<String, dynamic> message, Color textColor) {
+    switch (message["messageType"]) {
+      case "text":
+        return Text(
+          message['content'],
+          style: messageTextStyle.copyWith(
+              color: textColor), // Apply car-themed text style
+        );
+      case "image":
+        return SizedBox(
+          height: 280, // Slightly larger image size
+          width: 220,
+          child: ClipRRect(
+            // Clip image to container bounds
+            borderRadius: BorderRadius.circular(8),
+            child: Image.memory(
+              base64Decode(message['content']),
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      case "video":
+        return SizedBox(
+          height: 240,
+          width: 280,
+          child: VideoPreview(base64Video: message['content']),
+        );
+      default:
+        return Container();
+    }
+  }
+
+  Widget _buildInputArea() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 12.0, vertical: 12.0), // Increased padding
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.attach_file,
+                color: primaryCarColor), // Car-themed icon
+            onPressed: () {
+              Get.bottomSheet(
+                Container(
+                  height: 150,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Choose Media",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Image Picker Icon
+                          Column(
+                            children: [
+                              IconButton(
+                                onPressed: _pickImage,
+                                icon: const Icon(Icons.image,
+                                    size: 40, color: Colors.blue),
+                              ),
+                              const Text("Image"),
+                            ],
+                          ),
+                          // Video Picker Icon
+                          Column(
+                            children: [
+                              IconButton(
+                                onPressed: _pickVideo,
+                                icon: const Icon(Icons.videocam,
+                                    size: 40, color: Colors.red),
+                              ),
+                              const Text("Video"),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Type your message...',
+                border: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(20), // Rounded input field
+                  borderSide: const BorderSide(color: secondaryCarColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(
+                      color: primaryCarColor), // Highlight on focus
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.send,
+                color: primaryCarColor), // Car-themed icon
+            onPressed: () => _sendMessage(),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vinlab_new/controllers/chat_room_controller.dart';
 import 'package:vinlab_new/utils/app_colors.dart';
 
 class GroupMember {
@@ -11,16 +12,21 @@ class GroupMember {
 
 class AdminBottomSheet extends StatefulWidget {
   dynamic members;
+  final String chatroomId;
 
-  AdminBottomSheet({required this.members});
+  AdminBottomSheet(
+      {super.key, required this.members, required this.chatroomId});
 
   @override
   State<AdminBottomSheet> createState() => _AdminBottomSheetState();
 }
 
 class _AdminBottomSheetState extends State<AdminBottomSheet> {
+  final ChatRoomController _chatRoomController = Get.find();
+
   @override
   Widget build(BuildContext context) {
+    print("members: ${widget.members}");
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Container(
@@ -40,46 +46,24 @@ class _AdminBottomSheetState extends State<AdminBottomSheet> {
               itemCount: widget.members.length,
               itemBuilder: (context, index) {
                 final member = widget.members[index];
+                print("//////////// MEMBERS /////////////");
+                print(member);
                 return ListTile(
                   title: Text(member["firstName"]),
                   trailing: PopupMenuButton<String>(
                     onSelected: (String result) {
                       switch (result) {
-                        case 'Delete':
-                          String _name = "";
-                          setState(() {
-                            _name = widget.members[index].name;
-                            widget.members.removeAt(index);
-                          });
-                          if (_name != "") {
-                            Get.snackbar("User Deleted!",
-                                "$_name is deleted successfully...",
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor:
-                                    AppColors.appPrimaryRedCLr.withOpacity(.2));
-                          }
-
-                          break;
-                        case 'Make Admin':
-                          Get.snackbar(
-                            "Admin Created!",
-                            "${widget.members[index].name} is now an admin of the group...",
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor:
-                                AppColors.appPrimaryRedCLr.withOpacity(.2),
-                          );
+                        case 'Remove User':
+                          _chatRoomController.updateChatroomUsers(
+                              widget.chatroomId, member["_id"]);
                           break;
                       }
                     },
                     itemBuilder: (BuildContext context) =>
                         <PopupMenuEntry<String>>[
                       const PopupMenuItem<String>(
-                        value: 'Delete',
-                        child: Text('Delete'),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'Make Admin',
-                        child: Text('Make Admin'),
+                        value: 'Remove User',
+                        child: Text('Remove User'),
                       ),
                     ],
                   ),

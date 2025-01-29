@@ -16,8 +16,7 @@ class TrialVersionManagerController extends GetxController {
   Future<void> startTrial({required String trailName}) async {
     isLoading.value = true;
     try {
-      final url =
-          Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/start-trial');
+      final url = Uri.parse('http://192.168.10.23:5000/start-trial');
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
       var user = json.decode(prefs.getString("user")!);
@@ -119,8 +118,7 @@ class TrialVersionManagerController extends GetxController {
 
   updateTrialStatus(String name, String type, value) async {
     try {
-      final url =
-          Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/update-status');
+      final url = Uri.parse('http://192.168.10.23:5000/update-status');
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
       var user = json.decode(prefs.getString("user")!);

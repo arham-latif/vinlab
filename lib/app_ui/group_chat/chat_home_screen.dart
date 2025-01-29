@@ -38,6 +38,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   void initState() {
     _chatRoomController.fetchChatroomList();
     _chatRoomController.fetchUsers();
+    _chatRoomController.isUserInGroups();
     super.initState();
   }
 
@@ -71,20 +72,20 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
           onPressed: () => Get.back(),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchText = "";
-                  _searchController.clear();
-                }
-              });
-            },
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-          ),
-        ],
+        // actions: [
+        // IconButton(
+        // onPressed: () {
+        //   setState(() {
+        //     _isSearching = !_isSearching;
+        //     if (!_isSearching) {
+        //       _searchText = "";
+        //       _searchController.clear();
+        //     }
+        //   });
+        // },
+        // icon: Icon(_isSearching ? Icons.close : Icons.search),
+        // ),
+        // ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.appPrimaryRedCLr.withOpacity(.8),
@@ -117,16 +118,22 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
             ? const Center(
                 child: CircularProgressIndicator(),
               )
-            : _chatRoomController.chatroomList.isEmpty
+            : _chatRoomController.chatroomList.isEmpty ||
+                    _chatRoomController.isPresent.value
                 ? const Center(
-                    child: Text("No groups yet"),
+                    child: Text("You are not part of any group!"),
                   )
                 : ListView.builder(
                     itemCount: _chatRoomController.chatroomList.length,
                     itemBuilder: (context, index) {
-                      return RandomAvatar(
-                        chatroom: _chatRoomController.chatroomList[index],
-                      );
+                      return _chatRoomController.chatroomList[index]["users"]
+                              .any((user) =>
+                                  user['_id'].toString() ==
+                                  _chatRoomController.myId.toString())
+                          ? RandomAvatar(
+                              chatroom: _chatRoomController.chatroomList[index],
+                            )
+                          : Container();
                     },
                   ),
       ),
@@ -150,9 +157,9 @@ class RandomAvatar extends StatelessWidget {
           child: ListTile(
             splashColor: randomColor,
             onTap: () async {
+              print(chatroom);
               final prefs = await SharedPreferences.getInstance();
               var user = json.decode(prefs.getString("user")!);
-              // Get.to(GroupScreen(title: chatroom["name"]));
               Get.to(GroupScreen(
                   chatroomId: chatroom["_id"],
                   userId: user["_id"],
