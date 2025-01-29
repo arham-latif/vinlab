@@ -12,6 +12,7 @@ class CreateGroupDialog extends StatefulWidget {
 class _CreateGroupDialogState extends State<CreateGroupDialog> {
   final _formKey = GlobalKey<FormState>();
   final ChatRoomController _chatRoomController = Get.find();
+
   // final _adminNameController = TextEditingController();
   // List<String> selectedUsers = [];
 
@@ -74,7 +75,8 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
               hint: const Text('Add Members'),
               items: _chatRoomController.allUsers.map((user) {
                 return DropdownMenuItem<dynamic>(
-                  value: user["_id"],
+                  value:
+                      _chatRoomController.selectedUsers.contains(user["_id"]),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -83,7 +85,6 @@ class _CreateGroupDialogState extends State<CreateGroupDialog> {
                         value: _chatRoomController.selectedUsers
                             .contains(user["_id"]),
                         onChanged: (isSelected) {
-                          print(isSelected);
                           _toggleSelection(user["_id"], isSelected ?? false);
                           setState(() {});
                         },

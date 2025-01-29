@@ -17,13 +17,18 @@ class AboutGroupDialogue extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: Colors.black,
       child: FittedBox(
         child: AlertDialog(
+          backgroundColor: Colors.black,
           contentPadding: const EdgeInsets.symmetric(horizontal: 0),
           title: Text(
             'Group Details',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineLarge,
+            style: Theme.of(context)
+                .textTheme
+                .headlineLarge
+                ?.copyWith(color: Colors.white),
           ),
           titlePadding: const EdgeInsets.symmetric(vertical: 12),
           content: FittedBox(
@@ -34,21 +39,35 @@ class AboutGroupDialogue extends StatelessWidget {
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   alignment: Alignment.center,
-                  color: Colors.black12,
+                  color: Colors.white24,
                   height: 1,
                   width: Get.size.width * .5,
                 ),
-                Text('Group Name: $groupName'),
-                const SizedBox(height: 8),
-                Text('Members: $members'),
+                Text(
+                  'Group Name: $groupName',
+                  style: const TextStyle(color: Colors.white),
+                ),
                 const SizedBox(height: 8),
                 Text(
-                    'Created Date: ${DateFormat('yyyy-MM-dd').format(createdOn)}'),
+                  'Members: $members',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Created Date: ${DateFormat('yyyy-MM-dd').format(createdOn)}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  alignment: Alignment.center,
+                  color: Colors.white24,
+                  height: 1,
+                  width: Get.size.width * .5,
+                ),
               ],
             ),
           ),
           actions: <Widget>[
-            const Divider(),
             Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 12),

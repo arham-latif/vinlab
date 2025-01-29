@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:vinlab_new/app_ui/group_chat/video_preview.dart';
 import 'package:vinlab_new/controllers/chat_room_controller.dart';
+import 'package:vinlab_new/widgets/toaster.dart';
 
 import 'about_group.dart';
 import 'admin_access_screen.dart';
@@ -223,22 +224,30 @@ class _GroupScreenState extends State<GroupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("chatroom:");
-    print(widget.chatroom);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.chatroom["name"]), // More specific title
-        backgroundColor: primaryCarColor, // Car-themed app bar
+        title: Text(
+          widget.chatroom["name"],
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.black, // Car-themed app bar
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings),
             onSelected: (String result) async {
               switch (result) {
                 case 'leave':
-                  _chatRoomController.deleteChatroom(widget.chatroomId);
-                  Get.back();
-                  // _chatRoomController.fetchChatroomList();
-                  break;
+                  if (_chatRoomController.myId.value ==
+                          widget.chatroom["createdBy"]["_id"] ||
+                      widget.chatroom["createdBy"]["email"]
+                          .contains("vinlabs")) {
+                    _chatRoomController.deleteChatroom(widget.chatroomId);
+                    Get.back();
+                    break;
+                  } else {
+                    Toaster.error("Error", "Only admin can delete the group!");
+                    break;
+                  }
                 case 'about':
                   showDialog(
                       context: context,
@@ -255,10 +264,13 @@ class _GroupScreenState extends State<GroupScreen> {
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
+                    backgroundColor: Colors.black,
                     builder: (BuildContext context) {
                       return AdminBottomSheet(
                         members: widget.chatroom["users"],
                         chatroomId: widget.chatroomId,
+                        adminId: widget.chatroom["createdBy"]["_id"],
+                        chatroom: widget.chatroom,
                       );
                     },
                   );
@@ -287,9 +299,9 @@ class _GroupScreenState extends State<GroupScreen> {
           // Subtle car-related background (optional)
           image: DecorationImage(
             image: AssetImage(
-                "assets/icons/background-chat.png"), // Replace with your image
+                "assets/icons/background (4).jpg"), // Replace with your image
             fit: BoxFit.cover,
-            // opacity: 0.2, // Adjust opacity as needed
+            opacity: 0.9, // Adjust opacity as needed
           ),
         ),
         child: Column(
@@ -324,6 +336,7 @@ class _GroupScreenState extends State<GroupScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
+                    color: Colors.white,
                   ),
                 ),
               );
@@ -399,60 +412,6 @@ class _GroupScreenState extends State<GroupScreen> {
           horizontal: 12.0, vertical: 12.0), // Increased padding
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.attach_file,
-                color: primaryCarColor), // Car-themed icon
-            onPressed: () {
-              Get.bottomSheet(
-                Container(
-                  height: 150,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Choose Media",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          // Image Picker Icon
-                          Column(
-                            children: [
-                              IconButton(
-                                onPressed: _pickImage,
-                                icon: const Icon(Icons.image,
-                                    size: 40, color: Colors.blue),
-                              ),
-                              const Text("Image"),
-                            ],
-                          ),
-                          // Video Picker Icon
-                          Column(
-                            children: [
-                              IconButton(
-                                onPressed: _pickVideo,
-                                icon: const Icon(Icons.videocam,
-                                    size: 40, color: Colors.red),
-                              ),
-                              const Text("Video"),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -465,10 +424,77 @@ class _GroupScreenState extends State<GroupScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(
-                      color: primaryCarColor), // Highlight on focus
+                  borderSide: const BorderSide(color: primaryCarColor),
+                  // Highlight on focus
+                ),
+                hintStyle: const TextStyle(color: Colors.white24),
+                suffix: InkWell(
+                  onTap: () {
+                    Get.bottomSheet(
+                      Container(
+                        height: 150,
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Choose Media",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                // Image Picker Icon
+                                Column(
+                                  children: [
+                                    IconButton(
+                                      onPressed: _pickImage,
+                                      icon: const Icon(Icons.image,
+                                          size: 40, color: Colors.blue),
+                                    ),
+                                    const Text(
+                                      "Image",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                                // Video Picker Icon
+                                Column(
+                                  children: [
+                                    IconButton(
+                                      onPressed: _pickVideo,
+                                      icon: const Icon(Icons.videocam,
+                                          size: 40, color: Colors.red),
+                                    ),
+                                    const Text(
+                                      "Video",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Icon(
+                    Icons.attach_file,
+                    color: primaryCarColor,
+                    size: 20,
+                  ),
                 ),
               ),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
           const SizedBox(width: 8),
