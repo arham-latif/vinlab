@@ -16,7 +16,7 @@ class AppTagPoweredBy extends StatelessWidget {
               .copyWith(color: Colors.grey, fontWeight: FontWeight.w900),
           children: <TextSpan>[
             TextSpan(
-              text: " Vinlabs & Codelabs",
+              text: " Vinlabs",
               style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: Colors.grey,
                   ),
