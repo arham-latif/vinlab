@@ -63,7 +63,7 @@ class SignUpController extends GetxController {
   }
 
   Future<void> registerUser() async {
-    final url = Uri.parse('http://192.168.10.23:5000/register');
+    final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/register');
 
     if (emailController.text.contains("vinlab")) {
       Toaster.error("Error", "You cant sign up with this email");

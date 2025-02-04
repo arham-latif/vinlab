@@ -40,7 +40,8 @@ class ChatRoomController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
-      final url = Uri.parse('http://192.168.10.23:5000/chatrooms');
+      final url =
+          Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/chatrooms');
 
       final response = await http.get(
         url,
@@ -72,7 +73,7 @@ class ChatRoomController extends GetxController {
       var user = json.decode(prefs.getString("user")!);
 
       final url = Uri.parse(
-          'http://192.168.10.23:5000/chatroom/$chatroomId/user/$userToRemove');
+          'http://vinlab-6678db1ce141.herokuapp.com/chatroom/$chatroomId/user/$userToRemove');
 
       final response = await http.delete(
         url,
@@ -109,7 +110,8 @@ class ChatRoomController extends GetxController {
   }
 
   Future<void> deleteChatroom(String chatroomId) async {
-    final url = Uri.parse('http://192.168.10.23:5000/chatroom/$chatroomId');
+    final url = Uri.parse(
+        'http://vinlab-6678db1ce141.herokuapp.com/chatroom/$chatroomId');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -141,7 +143,7 @@ class ChatRoomController extends GetxController {
   }
 
   Future<void> createChatroom() async {
-    final url = Uri.parse('http://192.168.10.23:5000/chatroom');
+    final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/chatroom');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -192,7 +194,7 @@ class ChatRoomController extends GetxController {
       var user = jsonDecode(prefs.getString("user")!);
       print(user["email"]);
 
-      final url = Uri.parse('http://192.168.10.23:5000/users');
+      final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/users');
 
       final response = await http.get(
         url,

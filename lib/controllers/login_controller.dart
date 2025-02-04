@@ -33,7 +33,7 @@ class LoginController extends GetxController {
   }
 
   Future<void> login() async {
-    final url = Uri.parse('http://192.168.10.23:5000/login');
+    final url = Uri.parse('http://vinlab-6678db1ce141.herokuapp.com/login');
 
     final Map<String, String> requestBody = {
       'email': emailController.text,
@@ -77,8 +77,6 @@ class LoginController extends GetxController {
       if (kDebugMode) {
         print('Error occurred: $error');
       }
-      print(
-          "objectobjectobjectobjectobjectobjectobjectobjectobjectobjectobjectobjectobject");
       Toaster.error("Error", "Failed to fetch user details");
       isLoading.value = false;
     }

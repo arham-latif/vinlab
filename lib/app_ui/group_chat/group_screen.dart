@@ -72,13 +72,11 @@ class _GroupScreenState extends State<GroupScreen> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-      );
-    }
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
   }
 
   @override
@@ -86,7 +84,6 @@ class _GroupScreenState extends State<GroupScreen> {
     super.initState();
     _fetchMessages();
     _initializeSocket();
-    _scrollToBottom();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
@@ -104,7 +101,7 @@ class _GroupScreenState extends State<GroupScreen> {
   // Initialize Socket.IO connection
   void _initializeSocket() {
     socket = IO.io(
-      'http://192.168.10.23:5000',
+      'http://vinlab-6678db1ce141.herokuapp.com',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -128,6 +125,7 @@ class _GroupScreenState extends State<GroupScreen> {
             });
           }
         });
+        _scrollToBottom();
       }
     });
 
@@ -138,8 +136,8 @@ class _GroupScreenState extends State<GroupScreen> {
 
   // Fetch existing messages from the API
   Future<void> _fetchMessages() async {
-    final url =
-        Uri.parse('http://192.168.10.23:5000/messages/${widget.chatroomId}');
+    final url = Uri.parse(
+        'http://vinlab-6678db1ce141.herokuapp.com/messages/${widget.chatroomId}');
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -151,7 +149,6 @@ class _GroupScreenState extends State<GroupScreen> {
           'Authorization': 'Bearer $token',
         },
       );
-      print(jsonDecode(response.body));
       if (response.statusCode == 200) {
         final List<dynamic> messageData = jsonDecode(response.body);
         setState(() {
@@ -159,6 +156,7 @@ class _GroupScreenState extends State<GroupScreen> {
               messageData.map((msg) => Map<String, dynamic>.from(msg)).toList();
           isLoading = false;
         });
+        _scrollToBottom();
       } else {
         throw Exception('Failed to fetch messages');
       }
@@ -190,7 +188,12 @@ class _GroupScreenState extends State<GroupScreen> {
 
     final message = {
       'chatroomId': widget.chatroomId,
-      'senderId': widget.userId,
+      'senderId': {
+        "_id": widget.userId,
+        'firstName': user["firstName"],
+        'lastName': user["lastName"],
+        "email": user["email"]
+      },
       'content': messageType == 'text' ? content : base64Media,
       'messageType': messageType,
     };
@@ -199,7 +202,6 @@ class _GroupScreenState extends State<GroupScreen> {
     socket.emit('send_message', message);
 
     setState(() {
-      // Add the message to the UI (locally), but only once when sending it
       messages.add({
         'sender': {
           "_id": widget.userId,
@@ -213,9 +215,7 @@ class _GroupScreenState extends State<GroupScreen> {
     });
 
     // Clear the message input and scroll to the bottom
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+    _scrollToBottom();
 
     if (messageType == 'text') {
       _messageController.clear(); // Clear the input only for text messages
@@ -325,8 +325,12 @@ class _GroupScreenState extends State<GroupScreen> {
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
                   final message = messages[index];
-                  bool isMe = message['sender']['_id'].toString() ==
-                      widget.userId.toString();
+                  bool isMe = (message['sender'] is Map &&
+                          message['sender']['_id'] != null)
+                      ? message['sender']['_id'].toString() ==
+                          widget.userId.toString()
+                      : message['sender'].toString() ==
+                          widget.userId.toString();
                   return _buildMessageBubble(message, isMe);
                 },
               )
@@ -361,10 +365,24 @@ class _GroupScreenState extends State<GroupScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "${message["sender"]["firstName"]} ${message["sender"]["lastName"]}",
+              (() {
+                if (message["sender"] is String) {
+                  var user = _chatRoomController.allUsers.firstWhere(
+                    (u) => u["_id"] == message["sender"],
+                    orElse: () => null,
+                  );
+
+                  if (user != null) {
+                    return "${user["firstName"]} ${user["lastName"]}";
+                  } else {
+                    return "Unknown User";
+                  }
+                } else {
+                  return "${message["sender"]["firstName"]} ${message["sender"]["lastName"]}";
+                }
+              })(),
               style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white), // White sender name
+                  fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 6), // Increased spacing
             _buildMessageContent(message, textColor), // Pass text color
@@ -384,10 +402,9 @@ class _GroupScreenState extends State<GroupScreen> {
         );
       case "image":
         return SizedBox(
-          height: 280, // Slightly larger image size
+          height: 280,
           width: 220,
           child: ClipRRect(
-            // Clip image to container bounds
             borderRadius: BorderRadius.circular(8),
             child: Image.memory(
               base64Decode(message['content']),
